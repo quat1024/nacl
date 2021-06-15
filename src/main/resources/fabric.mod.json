@@ -9,7 +9,9 @@
     "quaternary"
   ],
   "contact": {
-    "homepage": "https://highlysuspect.agency/"
+    "homepage": "https://highlysuspect.agency/",
+		"sources": "https://github.com/quat1024/nacl",
+		"issues": "https://github.com/quat1024/nacl/issues"
   },
 
   "license": "LGPL-3.0-or-later",
