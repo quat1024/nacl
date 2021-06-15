@@ -50,7 +50,7 @@ Decorate your config class's fields with these.
 | `@Note`              | Add a multiline comment prefixed with "Note: ". |
 | `@Section`           | Print a big header comment before this field. (Config sections are *not* separated into separate classes, like e.g. forge 1.12 annotation config.) |
 | `@Skip`              | Skip this field. (You may also declare the field `transient`, `static`, or `final`.) |
-| `@SkipDefault`       | Don't write a "default value" comment for this config field. (YOu can also specify a string, to write a different one.) |
+| `@SkipDefault`       | Don't write a "default value" comment for this config field. (You can also specify a string, to write a different one.) |
 | `@Use`               | Use this named codon to de/serialize this field, instead of trying to guess by reflecting the field type - see below. |
 
 ## `Codon`s
