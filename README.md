@@ -9,27 +9,25 @@ Basically it's "the handrolled config thing I write in every mod that needs a co
 * Lightweight.
 * Depends only on Minecraft and its libraries. Doesn't even depend on Fabric.
 * Config format is simple, familiar, user-friendly, and has comments.
-* Annotation-powered POJO config, but it's flexible enough to handle any type you wanna throw at it.
+* Annotation-powered POJO config that can handle any type you wanna throw at it.
 * Assumes little about your mod.
 
 # Why not use `nacl`?
 
 * You won't find server -> client config syncing.
-* Config values can't span multiple lines, or begin/end with whitespace.
+* Config values can't span multiple lines, or begin/end with whitespace. The parser kinda sucks.
 * There is no "intermediate representation" for config files.
-* I don't have a lot of experience writing APIs for others to consume.
+* I don't have a lot of experience writing APIs for others to consume! :)
 
 # Usage
 
 ## Getting started
 
-1. Make a class with a public zero-argument constructor. Add fields and initialize them to their default values.
-	* (This is your "config class.")
-	* Static, final, `transient`, and `@Skip`-annotated fields are skipped.
+1. Make a class with a public zero-argument constructor. Add fields and initialize them to their default values. Static, final, `transient`, and `@Skip`-annotated fields are skipped.
 2. Make a `new ConfigReader()`. Think of them like Google GSON objects: stateless, can be reused for many different config files.
 3. Call `ConfigReader#read`. Pass `MyConfig.class`, and the `Path` you want the config file to live at.
 
-This returns an instance of your config class, configured according to the config file. (If no config file existed, the default config file is written.) That's all there is to it.
+All done. This returns an instance of your config class, configured according to the config file. (If no config file existed, the default config file is written.)
 
 ## Callbacks
 
@@ -83,11 +81,13 @@ Codons are provided for:
 * `boolean`
 * `Identifier`
 * Anything with a `Registry` defined in `Registry.class`: `Block`, `Item`, `SoundEvent`, you name it
+	* Note that you must read the config file *after* these things are registered.
 
 The following *type functions* are available as well. Unfortunately these are hardcoded for now.
 
 * `List<T>` - produces a comma-separated list
-* `Set<T>` - same deal
+* `Set<T>` - same
+* `T[]` - same
 * `Optional<T>` - empties get serialized as the empty string
 
 ### Classy codon
@@ -105,14 +105,24 @@ Two steps:
 
 # Shortcomings
 
+* Unboxed arrays (int[], etc) make it blow up for some reason!!!! Lists work okay. Dunno why.
 * `List<List<T>>` and ilk don't demarcate the inner/outer collections.
 * `List<Optional<T>>` might not work? Idk.
-* I want to support `Map<K, V>`, but I don't right now.
-* There's no way for `@Use` to target, say, the `T` in `List<T>`. Your named codon will have to target `List<T>`. There is `Codon#listOf()`, as consolation.
+* I want to support `Map<K, V>` but I don't right now.
+* There's no way for `@Use` to target, say, the `T` in `List<T>`. There is `Codon#listOf()`, as consolation.
+* Error messages are not very good. Just kinda "exceptions thrown all over" and I'd like to include line number and some more details. Kinda like the "crashreport section" thing
 
 # Maven
 
 I don't have this on any mavens unfortunately. I use `publishToMavenLocal` to depend on it, for now.
+
+## Debugging the test mod
+
+Idk, how are you actually supposed to do test mods in Loom?
+
+* Run the `runTest` gradle task without a debugger attached. (Debugger doesn't hurt anything, makes it slower though.)
+* Watch the log, intelliJ will interactively ask you to attach a debugger. Click the thingie.
+* Uh if the game doesn't crash, pressing Stop in intellij just like, detaches minecraft instead. So youll have to close the game yourself
 
 # License
 

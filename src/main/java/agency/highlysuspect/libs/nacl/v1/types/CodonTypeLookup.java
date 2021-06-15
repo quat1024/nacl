@@ -40,13 +40,20 @@ public class CodonTypeLookup {
 	@SuppressWarnings("unchecked")
 	public <T> Codon<T> findType(Type type) {
 		//Simple types
-		if(type instanceof Class<?>) {
+		if(type instanceof Class<?> classs) {
 			if(classyCodons.containsKey(type)) {
 				return (Codon<T>) classyCodons.get(type);
 			}
 			
 			if(registryTypes.containsKey(type)) {
 				return (Codon<T>) Codon.registryEntry(registryTypes.get(type));
+			}
+			
+			//Also arrays
+			//TODO: something in Codon#arrayOf blows up on primitive arrays (int[], etc). What to do about that
+			if(classs.isArray()) {
+				Class<?> componentType = classs.getComponentType();
+				return (Codon<T>) findType(componentType).arrayOf(componentType);
 			}
 		}
 		

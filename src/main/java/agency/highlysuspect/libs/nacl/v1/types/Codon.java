@@ -8,6 +8,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -54,7 +55,10 @@ public interface Codon<T> {
 	 * A codon that serializes elements of this registry as their Identifier.
 	 */
 	static <T> Codon<T> registryEntry(Registry<T> registry) {
-		return IDENTIFIER.dimap(registry::get, registry::getId);
+		return IDENTIFIER.dimap(id -> {
+			if(registry.containsId(id)) return registry.get(id);
+			else throw new ConfigParseException("Cannot find something named " + id + " in registry " + registry);
+		}, registry::getId);
 	}
 	
 	/**
@@ -141,6 +145,13 @@ public interface Codon<T> {
 		return Codon.of(
 			(targetField, opt) -> opt.map(x -> this.write(targetField, x)).orElse(""),
 			(sourceField, value) -> value.isEmpty() ? Optional.empty() : Optional.of(this.parse(sourceField, value)));
+	}
+	
+	@SuppressWarnings("unchecked")
+	default Codon<T[]> arrayOf(Class<?> remindMeWhatMyComponentTypeWasPlease) {
+		return listOf().dimap(
+			list -> list.toArray((T[]) Array.newInstance(remindMeWhatMyComponentTypeWasPlease, 0)),
+			Arrays::asList);
 	}
 	
 	/**

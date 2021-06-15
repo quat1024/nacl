@@ -113,7 +113,7 @@ public class ConfigReader {
 			Field field = configClass.getDeclaredField(name);
 			return skipField(field) ? null : field;
 		} catch (ReflectiveOperationException e) {
-			throw new RuntimeException(e);
+			return null;
 		}
 	}
 	

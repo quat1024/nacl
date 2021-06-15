@@ -1,5 +1,6 @@
 package agency.highlysuspect.libs.nacl;
 
+import agency.highlysuspect.libs.nacl.v1.ConfigExt;
 import agency.highlysuspect.libs.nacl.v1.ConfigReader;
 import agency.highlysuspect.libs.nacl.v1.annotation.AtLeast;
 import agency.highlysuspect.libs.nacl.v1.annotation.Comment;
@@ -15,6 +16,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -32,7 +34,7 @@ public class Test implements ModInitializer {
 		}
 	}
 	
-	public static class MyConfig {
+	public static class MyConfig implements ConfigExt {
 		@Comment("Hello world! Field A")
 		@AtLeast(intValue = 50)
 		int fieldA = 100;
@@ -43,16 +45,15 @@ public class Test implements ModInitializer {
 		@Section("The fun stuff")
 		Set<Integer> intSet = ImmutableSet.of(1, 2, 3, 4, 5);
 		
-		List<Item> blocks = ImmutableList.of(Items.APPLE, Items.COOKIE);
+		List<Item> items = ImmutableList.of(Items.APPLE, Items.COOKIE);
+		
+		Float[] floats = new Float[] {5f, 10f, 0.1f + 0.2f, 100000.002f};
 		
 		@Override
-		public String toString() {
-			return "MyConfig{" +
-				"fieldA=" + fieldA +
-				", fieldB=" + fieldB +
-				", intSet=" + intSet +
-				", blocks=" + blocks +
-				'}';
+		public void upgrade(HashMap<String, String> unknownKeys) {
+			unknownKeys.forEach((k, v) -> {
+				System.err.println("Unknown key value: " + k + ":" + v);
+			});
 		}
 	}
 }
