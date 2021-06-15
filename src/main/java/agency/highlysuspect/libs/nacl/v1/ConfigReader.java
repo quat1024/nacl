@@ -20,16 +20,32 @@ import java.util.List;
 public class ConfigReader {
 	public ConfigReader() {
 		this.typeLookup = new CodonTypeLookup();
+		setDelimiter(": ");
 	}
 	
 	public final CodonTypeLookup typeLookup;
+	public String kvDelimiter;
+	public String trimmedKvDelimiter;
 	
-	public void registerNamedCodon(String name, Codon<?> codon) {
+	public ConfigReader registerNamedCodon(String name, Codon<?> codon) {
 		typeLookup.registerNamedCodon(name, codon);
+		return this;
 	}
 	
-	public void registerClassyCodon(Class<?> classs, Codon<?> codon) {
+	public ConfigReader registerClassyCodon(Class<?> classs, Codon<?> codon) {
 		typeLookup.registerClassyCodon(classs, codon);
+		return this;
+	}
+	
+	/**
+	 * Set the key/value delimiter for the parser.
+	 * This string (in .trim()med form) sits between the key and the value.
+	 * It will be written out (untrimmed) when writing the config file.
+	 */
+	public ConfigReader setDelimiter(String s) {
+		kvDelimiter = s;
+		trimmedKvDelimiter = kvDelimiter.trim();
+		return this;
 	}
 	
 	public <T> T read(Class<T> configClass, Path configPath) throws IOException {
@@ -75,14 +91,14 @@ public class ConfigReader {
 			//Skip blank lines and comments
 			if(line.isEmpty() || line.startsWith("#")) continue;
 			
-			//Config file entries are of the form "key: value", so there has to be a colon character somewhere on the line.
-			int colonIdx = line.indexOf(':');
+			//Make sure there's a delimiter between the key and the value
+			int colonIdx = line.indexOf(trimmedKvDelimiter);
 			if(colonIdx == -1) {
-				throw new ConfigParseException("No colon character on line " + lineNo + " in config file " + configPath);
+				throw new ConfigParseException("No key/value delimiter on line " + lineNo + " in config file " + configPath);
 			}
 			
 			String key = line.substring(0, colonIdx).trim();
-			String value = line.substring(colonIdx + 1).trim();
+			String value = line.substring(colonIdx + trimmedKvDelimiter.length()).trim();
 			
 			//Find the field associated with this key
 			Field keyField = findConfigField(configClass, key);
@@ -215,7 +231,7 @@ public class ConfigReader {
 					}
 				}
 				
-				lines.add(field.getName() + ": " + codon.writeErased(field, field.get(configInst)));
+				lines.add(field.getName() + kvDelimiter + codon.writeErased(field, field.get(configInst)));
 			} catch (ReflectiveOperationException e) {
 				throw new ConfigParseException("reflective kaboom", e);
 			}
