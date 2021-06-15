@@ -206,8 +206,15 @@ public class ConfigReader {
 			
 			Codon<?> codon = typeLookup.find(field);
 			try {
-				String defaultValue = codon.writeErased(field, field.get(defaultConfig));
-				lines.add("# Default: " + (defaultValue.isEmpty() ? "<empty>" : defaultValue));
+				SkipDefault skip = field.getAnnotation(SkipDefault.class);
+				if(skip == null) {
+					String defaultValue = codon.writeErased(field, field.get(defaultConfig));
+					lines.add("# Default: " + (defaultValue.isEmpty() ? "<empty>" : defaultValue));
+				} else {
+					if(!skip.insteadUse().isEmpty()) {
+						lines.add("# Default: " + skip.insteadUse());
+					}
+				}
 				
 				lines.add(field.getName() + ": " + codon.writeErased(field, field.get(configInst)));
 			} catch (ReflectiveOperationException e) {
