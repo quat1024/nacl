@@ -26,5 +26,10 @@
   },
   "suggests": {
     "that-you-switch-to-quilt-as-soon-as-its-available": "*"
-  }
+  },
+	"custom": {
+		"modmenu": {
+			"badges": [ "library" ]
+		}
+	}
 }
