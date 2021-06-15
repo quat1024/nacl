@@ -1,6 +1,6 @@
 # Not Another Config Library
 
-Yep, it's a config library. Sorry.
+Config that won't make you salty.
 
 Basically it's "the handrolled config thing I write in every mod that needs a config, while growling to myself that i should probably make this into a library some day"
 
