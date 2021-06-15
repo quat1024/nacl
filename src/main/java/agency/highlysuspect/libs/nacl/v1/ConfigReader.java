@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class ConfigReader {
@@ -23,21 +24,34 @@ public class ConfigReader {
 	
 	public final CodonTypeLookup typeLookup;
 	
+	public void registerNamedCodon(String name, Codon<?> codon) {
+		typeLookup.registerNamedCodon(name, codon);
+	}
+	
+	public void registerClassyCodon(Class<?> classs, Codon<?> codon) {
+		typeLookup.registerClassyCodon(classs, codon);
+	}
+	
 	public <T> T read(Class<T> configClass, Path configPath) throws IOException {
 		T configInst;
 		if(Files.exists(configPath)) {
 			//The config file exists. Parse it from disk
 			configInst = parse(configClass, configPath);
 			//It might be old, so call upgrade() to let the config decide what to do
-			upgrade(configInst);
-			
+			if(configInst instanceof ConfigExt ext) {
+				ext.validate();
+			}
 		} else {
 			//Create a default config instance
 			configInst = defaultInstance(configClass);
 		}
 		
 		save(configClass, configInst, configPath); //Always save over the file
-		finish(configInst);
+		
+		if(configInst instanceof ConfigExt ext) {
+			ext.finish();
+		}
+		
 		return configInst;
 	}
 	
@@ -49,16 +63,9 @@ public class ConfigReader {
 		}
 	}
 	
-	protected <T> void upgrade(T configInst) {
-		if(configInst instanceof ConfigExt ext) ext.upgrade();
-	}
-	
-	protected <T> void finish(T configInst) {
-		if(configInst instanceof ConfigExt ext) ext.finish();
-	}
-	
 	protected <T> T parse(Class<T> configClass, Path configPath) throws IOException {
 		List<String> lines = Files.readAllLines(configPath, StandardCharsets.UTF_8);
+		HashMap<String, String> unknownKeys = new HashMap<>();
 		
 		T configInst = defaultInstance(configClass);
 		
@@ -82,7 +89,7 @@ public class ConfigReader {
 			if(keyField == null) {
 				//It's possible the config file format has changed, and this field is no longer relevant
 				//Ask the config what to do about it.
-				handleUnknownField(key, value);
+				unknownKeys.put(key, value);
 				continue;
 			}
 			
@@ -95,6 +102,8 @@ public class ConfigReader {
 				throw new ConfigParseException("problem setting field", e);
 			}
 		}
+		
+		if(configInst instanceof ConfigExt ext) ext.upgrade(unknownKeys);
 		
 		return configInst;
 	}
@@ -110,10 +119,6 @@ public class ConfigReader {
 	
 	protected boolean skipField(Field field) {
 		return ((field.getModifiers() & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_TRANSIENT)) != 0) || field.getAnnotation(Skip.class) != null;
-	}
-	
-	protected void handleUnknownField(String key, String value) {
-		//TODO
 	}
 	
 	@VisibleForTesting

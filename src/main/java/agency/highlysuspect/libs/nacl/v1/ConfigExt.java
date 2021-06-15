@@ -1,5 +1,7 @@
 package agency.highlysuspect.libs.nacl.v1;
 
+import java.util.HashMap;
+
 public interface ConfigExt {
 	/**
 	 * Perform extra validation on the values in this config file.
@@ -10,10 +12,11 @@ public interface ConfigExt {
 	}
 	
 	/**
-	 * Try to upgrade this config file to the latest version.
-	 * You may want to specify a "config_version" field somewhere in your file.
+	 * Try to upgrade this config file to the latest version. (You may want to specify a "config_version" field somewhere in your config file.)
+	 * 
+	 * @param unknownKeys Keys that are present in the config file on-disk, but didn't correspond to any fields on this object.
 	 */
-	default void upgrade() {
+	default void upgrade(HashMap<String, String> unknownKeys) {
 		
 	}
 	

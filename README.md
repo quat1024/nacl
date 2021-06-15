@@ -4,37 +4,57 @@ Yep, it's a config library. Sorry.
 
 Basically it's "the handrolled config thing I write in every mod that needs a config, while growling to myself that i should probably make this into a library some day"
 
-## Why use `nacl`?
+# Why use `nacl`?
 
 * Lightweight.
-* Depends only on Minecraft and its libraries. Not even Fabric.
-* Config format is simple, user-friendly, and has comments.
-* Annotation-powered POJO config, no "intermediate representation".
-  * Yes, annotations; but it's flexible enough to handle any type you wanna throw at it.
+* Depends only on Minecraft and its libraries. Doesn't even depend on Fabric.
+* Config format is simple, familiar, user-friendly, and has comments.
+* Annotation-powered POJO config, but it's flexible enough to handle any type you wanna throw at it.
 * Assumes little about your mod.
 
-## Why *not* use `nacl`?
+# Why not use `nacl`?
 
 * You won't find server -> client config syncing.
 * Config values can't span multiple lines, or begin/end with whitespace.
 * There is no "intermediate representation" for config files.
+* I don't have a lot of experience writing APIs for others to consume.
 
-## Usage
+# Usage
 
-### Get started
+## Getting started
 
-1. Make a class with a public zero-argument constructor. Stick a bunch of fields in it, and set them to their default values. This is your config class.
-2. Make a `ConfigReader`. It's stateless.
-3. Call `ConfigHolder#read`, pass the path you want the config file to live in.
-4. That's it.
+1. Make a class with a public zero-argument constructor. Add fields and initialize them to their default values.
+	* (This is your "config class.")
+	* Static, final, `transient`, and `@Skip`-annotated fields are skipped.
+2. Make a `new ConfigReader()`. Think of them like Google GSON objects: stateless, can be reused for many different config files.
+3. Call `ConfigReader#read`. Pass `MyConfig.class`, and the `Path` you want the config file to live at.
 
-### `ConfigOperations`
+This returns an instance of your config class, configured according to the config file. (If no config file existed, the default config file is written.) That's all there is to it.
 
-Implementing `ConfigOperations` on your config POJO creates some callbacks:
+## Callbacks
 
-(todo)
+If your config class implements `ConfigExt`, the following callbacks become available:
 
-### `Codon`
+* `upgrade(HashMap<String, String> unknownKeys)` - Called after parsing the config file. These keys exist in the config file, but don't correspond to any fields in your config class. Handle them here.
+* `validate()` - Called after `upgrade`. `nacl` provides some simple numeric validation (at least X, at most X). If you have more complex validation needs, do them in here. Throw a `ConfigParseException` on error.
+* `finish()` - Called if your config file successfully parses. This is a good place to create Java objects derived from fields in the config file, if you need to do that.
+
+## Annotations
+
+Decorate your config class's fields with these.
+
+| annotation           | what it do :eyes: |
+| :------------------: | :---------------- |
+| `@AtLeast` `@AtMost` | Place bounds on numeric values. Produces a config comment documenting the bounds, and validates that the bounds are respected. |
+| `@BlankLine`         | Add extra blank lines to the config file. |
+| `@Comment`           | Add a multiline comment. Pass an array of strings, one for each line. |
+| `@Example`           | Add (one or more) comment lines prefixed with "Example: ". |
+| `@Note`              | Add a multiline comment prefixed with "Note: ". |
+| `@Section`           | Print a big header comment before this field. (Config sections are *not* separated into separate classes, like e.g. forge 1.12 annotation config.) |
+| `@Skip`              | Skip this field. (You may also declare the field `transient`, `static`, or `final`.) |
+| `@Use`               | Use this named codon to de/serialize this field, instead of trying to guess by reflecting the field type - see below. |
+
+## `Codon`s
 
 `Codon`s are shitty versions of DataFixerUpper's `Codec`. No `DataResult`s here, just these two methods:
 
@@ -45,42 +65,55 @@ interface Codon<T> {
 }
 ```
 
-(Perform data validation in here - that's why you're given access to the `Field` of your config object, so you can do things like inspect its annotation for "at least / at most" bounds.)
+`write` is used to include the default value of your config as a comment, and `parse` is used to read it back from the config file. You're given access to the `Field` of your config object so you can do things like, inspect its annotation for "at least / at most" bounds. Throw an exception if validation fails.
+
+There are three ways to specify which `Codon` will be used for a given field:
+
+* Automatically. `nacl` will use reflection to guess the correct `Codon`. Works for many common types.
+* Classy codon. Register a `Codon` for a particular `Class<?>`.
+* Named codon. Register a `Codon` under a given name, then use it for particular fields.
+
+### Automatic
 
 Codons are provided for:
 
 * `String`
-* all primitive numeric types (byte, short, int, long, float, double)
+* all primitive numeric types (`byte`, `short`, `int`, `long`, `float`, `double`)
+	* these respect `@AtLeast` and `@AtMost` annotations
 * `boolean`
 * `Identifier`
-
-Due to :sparkles: reflection magic :sparkles:, all of the following types can be used as well:
-
 * Anything with a `Registry` defined in `Registry.class`: `Block`, `Item`, `SoundEvent`, you name it
-* `List<T>` (comma-separated)
-* `Set<T>` (comma-separated)
-* `Optional<T>` (empties get serialized as the empty string)
 
-Known shortcomings:
+The following *type functions* are available as well. Unfortunately these are hardcoded for now.
 
-* `List<List<T>>` and ilk don't demarcate the inner/outer collections
-* `List<Optional<T>>` might not work? Idk
-* I want to support `Map<K, V>` but I don't
+* `List<T>` - produces a comma-separated list
+* `Set<T>` - same deal
+* `Optional<T>` - empties get serialized as the empty string
 
-### Annotation tour
+### Classy codon
 
-* `@Skip` - skip this field. You may also declare the field `transient`, `static`, or `final`.
-* `@BlankLine` - add (one or more) extra blank lines to the config file, if you need more visual separation.
-* `@Section` - Prints a large comment before this field, marking off a section of the config file. (Config sections are *not* separated into separate classes.)
-* `@Comment` - Add a multiline comment. (Don't use `\n` characters in the string, pass an array of strings, one for each line.)
-* `@Note` - Add a multiline comment prefixed with "Note: ".
-* `@Example` - Add (one or more) comments prefixed with "Example: ".
-* `@AtLeast` and `@AtMost` - Place bounds on numeric values. (Produces a config comment documenting the bounds.)
+Call `ConfigReader#registerClassyCodon`, give it a `Class<?>` and a `Codon<?>` capable of reading and writing that class. If you've ever used Google GSON and had to tell it how to serialize a particular type: it's like that.
 
-## Mavens
+Type functions are aware of these; if you define a classy codon for `Heehoo` you get `List<Heehoo>` for free, etc.
+
+### Named codon
+
+Two steps:
+
+* Call `ConfigReader#registerNamedCodon`, with a string name and a codon.
+* Decorate relevant fields in your config class with `@Use("that name")`.
+
+# Shortcomings
+
+* `List<List<T>>` and ilk don't demarcate the inner/outer collections.
+* `List<Optional<T>>` might not work? Idk.
+* I want to support `Map<K, V>`, but I don't right now.
+* There's no way for `@Use` to target, say, the `T` in `List<T>`. Your named codon will have to target `List<T>`. There is `Codon#listOf()`, as consolation.
+
+# Maven
 
 I don't have this on any mavens unfortunately. I use `publishToMavenLocal` to depend on it, for now.
 
-## License
+# License
 
 LGPL 3 or later
