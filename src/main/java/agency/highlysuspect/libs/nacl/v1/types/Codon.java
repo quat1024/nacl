@@ -3,14 +3,15 @@ package agency.highlysuspect.libs.nacl.v1.types;
 import agency.highlysuspect.libs.nacl.v1.ConfigParseException;
 import agency.highlysuspect.libs.nacl.v1.annotation.AtLeast;
 import agency.highlysuspect.libs.nacl.v1.annotation.AtMost;
-import com.google.common.base.Strings;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;

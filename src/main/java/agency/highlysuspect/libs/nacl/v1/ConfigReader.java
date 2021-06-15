@@ -7,7 +7,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
-import org.spongepowered.asm.util.Annotations;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
