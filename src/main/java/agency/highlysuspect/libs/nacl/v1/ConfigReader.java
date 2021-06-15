@@ -7,6 +7,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.util.Annotations;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -131,6 +132,8 @@ public class ConfigReader {
 			if(skipField(field)) continue;
 			field.setAccessible(true);
 			
+			//todo: this is getting messy, and i think breaking each annotation out into its own separate (extensible) handler would be a good idea
+			
 			BlankLine bl = field.getDeclaredAnnotation(BlankLine.class);
 			if(bl != null) for(int i = 0; i < bl.lines(); i++) lines.add("");
 			
@@ -167,7 +170,39 @@ public class ConfigReader {
 				}
 			}
 			
-			//todo write atLeast, atMost, etc
+			AtLeast atl = field.getDeclaredAnnotation(AtLeast.class);
+			if(atl != null) {
+				if(atl.byteValue() != Byte.MIN_VALUE) {
+					lines.add("# At least: " + atl.byteValue());
+				} else if(atl.shortValue() != Short.MIN_VALUE) {
+					lines.add("# At least: " + atl.shortValue());
+				} else if(atl.intValue() != Integer.MIN_VALUE) {
+					lines.add("# At least: " + atl.intValue());
+				} else if(atl.longValue() != Long.MIN_VALUE) {
+					lines.add("# At least: " + atl.longValue());
+				} else if(!Float.isNaN(atl.floatValue())) {
+					lines.add("# At least: " + atl.floatValue());
+				} else if(!Double.isNaN(atl.doubleValue())) {
+					lines.add("# At least: " + atl.doubleValue());
+				}
+			}
+			
+			AtMost atm = field.getDeclaredAnnotation(AtMost.class);
+			if(atm != null) {
+				if(atm.byteValue() != Byte.MAX_VALUE) {
+					lines.add("# At most: " + atm.byteValue());
+				} else if(atm.shortValue() != Short.MAX_VALUE) {
+					lines.add("# At most: " + atm.shortValue());
+				} else if(atm.intValue() != Integer.MAX_VALUE) {
+					lines.add("# At most: " + atm.intValue());
+				} else if(atm.longValue() != Long.MAX_VALUE) {
+					lines.add("# At most: " + atm.longValue());
+				} else if(!Float.isNaN(atm.floatValue())) {
+					lines.add("# At most: " + atm.floatValue());
+				} else if(!Double.isNaN(atm.doubleValue())) {
+					lines.add("# At most: " + atm.doubleValue());
+				}
+			}
 			
 			Codon<?> codon = typeLookup.find(field);
 			try {
