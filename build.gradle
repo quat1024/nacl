@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.8-SNAPSHOT'
+	id 'fabric-loom' version '0.10-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -18,6 +18,8 @@ dependencies {
 }
 
 // i dont know what im doing.jpg
+//TODO update this to the fancy not-janky loom run configuration thingie
+// this is removed in loom 0.12 apparently
 task runTest(type: net.fabricmc.loom.task.RunClientTask, dependsOn: downloadAssets, group: "yeah wooo yea ewoooo y ea woo") {
 	classpath = configurations.runtimeClasspath
 	classpath sourceSets.main.output
