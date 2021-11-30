@@ -20,7 +20,7 @@
   "environment": "*",
 
   "depends": {
-    "java": ">=16"
+    "java": ">=17"
   },
   "suggests": {
     "that-you-switch-to-quilt-as-soon-as-its-available": "*"
