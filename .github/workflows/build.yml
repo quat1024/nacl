@@ -16,6 +16,8 @@ jobs:
         uses: gradle/wrapper-validation-action@v1
       - name: chmod gradle wrapper
         run: chmod +x ./gradlew
+      - name: Print gradle version because im gonna mcfuckin lose it
+        run: ./gradlew --version
       - name: build
         run: ./gradlew build
       - name: capture build artifacts
